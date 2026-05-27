@@ -5,6 +5,8 @@ import { ApiGatewayModule } from "../src/api-gateway.module";
 
 describe("IAM Auth (e2e)", () => {
   let app: INestApplication;
+  const testEmail = `e2e-login-${Date.now()}@example.com`;
+  const testUsername = "e2e-login-user";
 
   beforeAll(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -13,6 +15,13 @@ describe("IAM Auth (e2e)", () => {
 
     app = moduleFixture.createNestApplication();
     await app.init();
+
+    // Register a test user so /auth/login has a record to find
+    await request(app.getHttpServer())
+      .post("/auth/register")
+      .set("Content-Type", "application/json")
+      .send({ email: testEmail, username: testUsername })
+      .expect(201);
   });
 
   afterAll(async () => {
@@ -23,6 +32,8 @@ describe("IAM Auth (e2e)", () => {
     it("should successfully authenticate and return a valid JWT", async () => {
       const response = await request(app.getHttpServer())
         .post("/auth/login")
+        .set("Content-Type", "application/json")
+        .send({ email: testEmail })
         .expect(200);
 
       const body: Record<string, unknown> = response.body as Record<
@@ -41,6 +52,8 @@ describe("IAM Auth (e2e)", () => {
     it("should include the x-correlation-id in the response header", async () => {
       const response = await request(app.getHttpServer())
         .post("/auth/login")
+        .set("Content-Type", "application/json")
+        .send({ email: testEmail })
         .expect(200);
 
       expect(response.headers).toHaveProperty("x-correlation-id");

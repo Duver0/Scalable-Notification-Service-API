@@ -53,6 +53,7 @@ describe("Notifications E2E (integration)", () => {
       .set("Idempotency-Key", idempotencyKey)
       .send({
         to: "user@example.com",
+        channel: "email",
         templateId: "welcome-email",
         variables: { name: "Test" },
       })
