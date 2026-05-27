@@ -170,3 +170,4 @@ jobs:
           REDIS_HOST: localhost
           REDIS_PORT: 6379
           DATABASE_URL: postgresql://admin:password@localhost:5432/notification_db?schema=public
+          NODE_OPTIONS: "--experimental-vm-modules"
