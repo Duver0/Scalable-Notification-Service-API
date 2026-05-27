@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Notification Service Dashboard</title>
+  <link rel="stylesheet" href="/dashboard/style.css">
+</head>
+<body>
+  <nav class="navbar">
+    <div class="nav-brand">
+      <span class="nav-logo">📨</span>
+      <span class="nav-title">Notification Service</span>
+    </div>
+    <div class="nav-tabs">
+      <button class="tab-btn active" data-tab="dashboard">Dashboard</button>
+      <button class="tab-btn" data-tab="auth">Auth</button>
+      <button class="tab-btn" data-tab="notifications">Send</button>
+      <button class="tab-btn" data-tab="history">History</button>
+    </div>
+    <div class="nav-status" id="navStatus">
+      <span class="status-dot offline"></span>
+      <span class="status-text">Offline</span>
+    </div>
+  </nav>
+
+  <main class="container">
+    <!-- Dashboard Tab -->
+    <section id="tab-dashboard" class="tab-content active">
+      <h2>📊 Dashboard</h2>
+      <div class="stats-grid">
+        <div class="stat-card" id="statApi">
+          <div class="stat-value">-</div>
+          <div class="stat-label">API Status</div>
+        </div>
+        <div class="stat-card" id="statWorker">
+          <div class="stat-value">-</div>
+          <div class="stat-label">Worker Status</div>
+        </div>
+        <div class="stat-card" id="statAuth">
+          <div class="stat-value">-</div>
+          <div class="stat-label">Auth</div>
+        </div>
+        <div class="stat-card" id="statJobs">
+          <div class="stat-value">-</div>
+          <div class="stat-label">Active Jobs</div>
+        </div>
+      </div>
+      <div class="quick-actions">
+        <h3>Quick Actions</h3>
+        <div class="action-buttons">
+          <button class="btn btn-primary" onclick="switchTab('auth')">🔑 Login / Register</button>
+          <button class="btn btn-success" onclick="switchTab('notifications')">📨 Send Notification</button>
+          <button class="btn btn-info" onclick="switchTab('history')">📋 View History</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Auth Tab -->
+    <section id="tab-auth" class="tab-content">
+      <h2>🔑 Authentication</h2>
+      <div id="userInfo" class="user-info hidden">
+        <p>Logged in as: <strong id="userEmail"></strong></p>
+        <button class="btn btn-danger" onclick="logout()">Logout</button>
+      </div>
+      <div class="auth-forms">
+        <div class="card">
+          <h3>Register</h3>
+          <form id="registerForm">
+            <div class="form-group">
+              <label for="regEmail">Email</label>
+              <input type="email" id="regEmail" placeholder="user@example.com" required>
+            </div>
+            <div class="form-group">
+              <label for="regUsername">Username</label>
+              <input type="text" id="regUsername" placeholder="John Doe" required>
+            </div>
+            <button type="submit" class="btn btn-primary">Register</button>
+          </form>
+        </div>
+        <div class="card">
+          <h3>Login</h3>
+          <form id="loginForm">
+            <div class="form-group">
+              <label for="loginEmail">Email</label>
+              <input type="email" id="loginEmail" placeholder="user@example.com" required>
+            </div>
+            <button type="submit" class="btn btn-success">Login</button>
+          </form>
+        </div>
+      </div>
+    </section>
+
+    <!-- Send Notification Tab -->
+    <section id="tab-notifications" class="tab-content">
+      <h2>📨 Send Notification</h2>
+      <div id="authWarning" class="alert alert-warning hidden">
+        Please <a href="#" onclick="switchTab('auth')">login or register</a> first.
+      </div>
+      <form id="notifyForm" class="card">
+        <div class="form-row">
+          <div class="form-group">
+            <label for="notifyTo">To (email or phone)</label>
+            <input type="text" id="notifyTo" placeholder="user@example.com" required>
+          </div>
+          <div class="form-group">
+            <label for="notifyChannel">Channel</label>
+            <select id="notifyChannel">
+              <option value="email">Email</option>
+              <option value="sms">SMS</option>
+              <option value="push">Push</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="notifyTemplate">Template</label>
+            <select id="notifyTemplate">
+              <option value="welcome-email">Welcome Email</option>
+              <option value="welcome-sms">Welcome SMS</option>
+              <option value="welcome-push">Welcome Push</option>
+              <option value="reset-password">Reset Password</option>
+              <option value="notification">Notification</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="notifyCorrelationId">Correlation ID (optional)</label>
+            <input type="text" id="notifyCorrelationId" placeholder="auto-generated if empty">
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="notifyIdempotency">Idempotency Key (optional)</label>
+          <input type="text" id="notifyIdempotency" placeholder="unique key for deduplication">
+        </div>
+        <div id="templateVars" class="form-group">
+          <label>Template Variables</label>
+          <div id="varFields">
+            <div class="form-row var-row">
+              <input type="text" class="var-key" placeholder="variable name" value="name">
+              <input type="text" class="var-value" placeholder="value" value="User">
+            </div>
+          </div>
+          <button type="button" class="btn btn-sm" onclick="addVariable()">+ Add variable</button>
+        </div>
+        <button type="submit" class="btn btn-success">🚀 Send Notification</button>
+      </form>
+      <div id="notifyResult" class="hidden"></div>
+    </section>
+
+    <!-- History Tab -->
+    <section id="tab-history" class="tab-content">
+      <h2>📋 Notification History</h2>
+      <div class="search-bar">
+        <input type="text" id="searchCorrelationId" placeholder="🔍 Search by Correlation ID...">
+        <button class="btn btn-primary" onclick="searchHistory()">Search</button>
+        <button class="btn btn-secondary" onclick="loadHistory()">All</button>
+      </div>
+      <div class="table-container">
+        <table id="historyTable">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Channel</th>
+              <th>To</th>
+              <th>Template</th>
+              <th>Status</th>
+              <th>Correlation ID</th>
+              <th>Created</th>
+              <th>Error</th>
+            </tr>
+          </thead>
+          <tbody id="historyBody">
+            <tr><td colspan="8" class="text-center">No data yet</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+
+  <div id="toast" class="toast hidden"></div>
+
+  <script src="/dashboard/app.js"></script>
+</body>
+</html>
