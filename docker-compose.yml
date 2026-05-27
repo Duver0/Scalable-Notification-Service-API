@@ -1,0 +1,144 @@
+version: '3.8'
+
+services:
+  redis:
+    image: redis:7-alpine
+    ports:
+      - '6379:6379'
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  postgres:
+    image: postgres:15-alpine
+    ports:
+      - '5432:5432'
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: notification_db
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U admin -d notification_db"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  api-gateway:
+    profiles: ['prod']
+    build:
+      context: .
+      dockerfile: apps/api-gateway/Dockerfile
+    ports:
+      - '3000:3000'
+    environment:
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - DATABASE_URL=postgresql://admin:password@postgres:5432/notification_db?schema=public
+      - POSTGRES_HOST=postgres
+      - POSTGRES_PORT=5432
+      - POSTGRES_USER=admin
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=notification_db
+    depends_on:
+      redis:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+
+  notification-worker:
+    profiles: ['prod']
+    build:
+      context: .
+      dockerfile: apps/notification-worker/Dockerfile
+    ports:
+      - '3001:3001'
+    environment:
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - DATABASE_URL=postgresql://admin:password@postgres:5432/notification_db?schema=public
+      - POSTGRES_HOST=postgres
+      - POSTGRES_PORT=5432
+      - POSTGRES_USER=admin
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=notification_db
+    depends_on:
+      redis:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+
+  api-gateway-dev:
+    image: oven/bun:latest
+    profiles: ['dev']
+    working_dir: /workspace
+    volumes:
+      - ./:/workspace:cached
+    command: >
+      sh -c "
+        echo '⏳ Generating Prisma client...' &&
+        npx prisma generate &&
+        echo '⏳ Applying migrations...' &&
+        npx prisma migrate deploy &&
+        echo '🚀 Starting API Gateway (dev)...' &&
+        bun run start:dev api-gateway
+      "
+    ports:
+      - '3000:3000'
+    environment:
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - DATABASE_URL=postgresql://admin:password@postgres:5432/notification_db?schema=public
+      - POSTGRES_HOST=postgres
+      - POSTGRES_PORT=5432
+      - POSTGRES_USER=admin
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=notification_db
+    depends_on:
+      redis:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+
+  notification-worker-dev:
+    image: oven/bun:latest
+    profiles: ['dev']
+    working_dir: /workspace
+    volumes:
+      - ./:/workspace:cached
+    command: >
+      sh -c "
+        echo '⏳ Generating Prisma client...' &&
+        npx prisma generate &&
+        echo '⏳ Applying migrations...' &&
+        npx prisma migrate deploy &&
+        echo '🚀 Starting Notification Worker (dev)...' &&
+        bun run start:dev notification-worker
+      "
+    ports:
+      - '3001:3001'
+    environment:
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - DATABASE_URL=postgresql://admin:password@postgres:5432/notification_db?schema=public
+      - POSTGRES_HOST=postgres
+      - POSTGRES_PORT=5432
+      - POSTGRES_USER=admin
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=notification_db
+    depends_on:
+      redis:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+
+volumes:
+  redis_data:
+  postgres_data:
+
