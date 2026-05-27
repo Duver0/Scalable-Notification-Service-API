@@ -1,0 +1,50 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum JobStatus {
+  queued
+  processing
+  sent
+  failed
+  duplicate
+}
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  username  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  notificationJobs NotificationJob[]
+}
+
+model NotificationJob {
+  id                 String    @id @default(uuid())
+  status             JobStatus @default(queued)
+  channel            String
+  to                 String
+  templateId         String
+  variables          Json?
+  correlationId      String?
+  idempotencyKey     String?   @unique
+  errorMessage       String?
+  providerMessageId  String?
+  userId             String?
+  user               User?     @relation(fields: [userId], references: [id])
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+
+  @@index([status])
+  @@index([idempotencyKey])
+  @@index([createdAt])
+}
