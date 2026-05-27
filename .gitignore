@@ -29,4 +29,6 @@ Thumbs.db
 *.swp
 *.swo
 
-/generated/prisma
+/generated/prisma/*
+!/generated/prisma/__mocks__/
+!/generated/prisma/__mocks__/**
