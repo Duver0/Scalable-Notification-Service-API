@@ -84,6 +84,20 @@ jobs:
       - name: Generate Prisma client
         run: npx prisma generate
 
+      - name: Create Prisma mock for Jest
+        run: |
+          mkdir -p generated/prisma/__mocks__
+          cat > generated/prisma/__mocks__/client.ts << 'MOCKEOF'
+          // Mock for Prisma 7.x generated client used during Jest tests
+          export class PrismaClient {
+            $connect = jest.fn().mockResolvedValue(undefined);
+            $disconnect = jest.fn().mockResolvedValue(undefined);
+            user = { findUnique: jest.fn(), findMany: jest.fn(), create: jest.fn(), update: jest.fn(), delete: jest.fn() };
+            notificationJob = { findUnique: jest.fn(), findMany: jest.fn(), create: jest.fn(), update: jest.fn(), delete: jest.fn() };
+          }
+          export const Prisma = {};
+          MOCKEOF
+
       - name: Run database migrations
         run: npx prisma migrate deploy
         env:
@@ -130,6 +144,20 @@ jobs:
 
       - name: Generate Prisma client
         run: npx prisma generate
+
+      - name: Create Prisma mock for Jest
+        run: |
+          mkdir -p generated/prisma/__mocks__
+          cat > generated/prisma/__mocks__/client.ts << 'MOCKEOF'
+          // Mock for Prisma 7.x generated client used during Jest tests
+          export class PrismaClient {
+            $connect = jest.fn().mockResolvedValue(undefined);
+            $disconnect = jest.fn().mockResolvedValue(undefined);
+            user = { findUnique: jest.fn(), findMany: jest.fn(), create: jest.fn(), update: jest.fn(), delete: jest.fn() };
+            notificationJob = { findUnique: jest.fn(), findMany: jest.fn(), create: jest.fn(), update: jest.fn(), delete: jest.fn() };
+          }
+          export const Prisma = {};
+          MOCKEOF
 
       - name: Run database migrations
         run: npx prisma migrate deploy
