@@ -101,15 +101,6 @@ export class NotificationsController {
         60 * 60,
       );
       if (!set) {
-        // Track duplicate at API level
-        await this.jobService.createJob({
-          channel: payload.channel,
-          to: payload.to,
-          templateId: payload.templateId,
-          variables: payload.variables,
-          correlationId,
-          idempotencyKey,
-        });
         return { status: "duplicate", correlationId };
       }
     }
